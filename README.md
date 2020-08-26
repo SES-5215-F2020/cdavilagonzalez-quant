@@ -1,4 +1,4 @@
-# Quantitative Analysis Assignments for Catherine Saint
+# Quantitative Analysis Assignments for Cristina Davila Gonzalez
 
 This is a repository for assignments completed by Cristina Davila Gonzalez for Quantitative Analysis during the Fall 2020 semester at the GSD.
 
