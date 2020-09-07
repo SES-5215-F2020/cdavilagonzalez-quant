@@ -51,7 +51,7 @@ My person-level dataset has 25,993 rows, which mean my analysis will include 25,
 9. **Limited English-speaking household** (LNGI) (categorical)
 
 ```{r load household-level data, message=FALSE, results = 'hide',}
-hh_data <- get_pums(variables = c("R18",
+hh_data <- get_pums(variables = c("R18", 
                         "ACCESS",
                         "NPP", 
                         "LNGI"),
