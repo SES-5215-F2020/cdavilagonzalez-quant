@@ -449,37 +449,6 @@ library(tidyverse)</code></pre>
 <p>For both datasets, I’ll save them as a CSV files so I can use them later.</p>
 <pre class="r"><code>write_csv(person_data, &quot;u18people.csv&quot;)
 write_csv(hh_data, &quot;households.csv&quot;)</code></pre>
-<hr />
-</div>
-</div>
-<div id="bonus-case-study---cook-county" class="section level1">
-<h1>Bonus: Case Study - Cook County</h1>
-<p>In the course’s general project, I’m considering a potential case study using area-level data. I wanted to add a case study where I get incorporate specific variables, that analyzed on a county scale, could provide valuable insight on the research question. I plan to handle these variables independently from the person and household-level, as area-level variables are based on the ACS 5-year data.</p>
-<div id="area-level-data-analysis" class="section level2">
-<h2>Area-Level Data Analysis</h2>
-<ol start="10" style="list-style-type: decimal">
-<li><strong>Total Population</strong> (continuous): total_pop</li>
-<li><strong>Grandchildren under 18 living with a grandparent</strong> (categorical): U18_wgp</li>
-<li><strong>Grandparents of over 60 responsible for grandchildren without the presence of their parents</strong> (categorical): G60_wop</li>
-</ol>
-<pre class="r"><code>pop_vars &lt;- c(total_pop = &quot;B02001_001&quot;,
-              U18_wgp = &quot;B10001_001&quot;,
-              G60_wop = &quot;B10051_005&quot;)
-
-countyGrandparents60plus_wUnder18_CookIL &lt;- get_acs(geography= &quot;county&quot;, 
-              variables = pop_vars, 
-              output = &quot;wide&quot;, 
-              state = &quot;IL&quot;,
-              county = &quot;Cook&quot;,
-              year = 2018, 
-              survey = &quot;acs5&quot;)</code></pre>
-<pre class="r"><code>countyGrandparents60plus_wUnder18_CookIL</code></pre>
-<pre><code>## # A tibble: 1 x 8
-##   GEOID NAME           total_popE total_popM U18_wgpE U18_wgpM G60_wopE G60_wopM
-##   &lt;chr&gt; &lt;chr&gt;               &lt;dbl&gt;      &lt;dbl&gt;    &lt;dbl&gt;    &lt;dbl&gt;    &lt;dbl&gt;    &lt;dbl&gt;
-## 1 17031 Cook County, …    5223719         NA   104372     3079     4654      475</code></pre>
-<p>For this additional dataset, I’ll also save it so I can use it later.</p>
-<pre class="r"><code>write_csv(countyGrandparents60plus_wUnder18_CookIL, &quot;cookcountyil.csv&quot;)</code></pre>
 </div>
 </div>
 
