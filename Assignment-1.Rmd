@@ -13,22 +13,25 @@ library(tidycensus)
 library(tidyverse)
 library(dplyr)
 ```
-test test
+
 # Variables Used
 
-For this exercise I used multi-level variables from the **American Community Survey 2018**, adding person-level and household-level data (both from the ACS 1-year data) to eventually generate supporting information on the research question, specifically in the state of **Illinois**.
-
-##   Person-Level Data Analysis 
+For this exercise I used person-level variables from the **American Community Survey 2018** (ACS 1-year data) to eventually generate supporting information on the research question, specifically in the state of **Illinois**. As I developed my analysis on the selected variables, I decided to generate two datasets; one with **underage enrolled students** and another one considering **grandparents of 50 years old and up** in charge of their grandchildren.
 
 1. **Age** (AGEP) (continuous)
 2. **School Enrollment** (SCH) (categorical)
 3. **Grade Level Attending** (SCHG) (categorical)
 4. **Self-care difficulty** (FDDRSP) (categorical)
+5. **Grandparents responsible for grandchildren** (GCR) (categorical)
+6. **Total person's income** (PINCP) (continuous)
 
-As I developed my dataset, I decided to apply a filter to narrow my search to **underage enrolled students** (<18 y/o)
+For this first dataset, I'm only considering variables *1,2,3 and 4*, applying a filter to the *AGEP* variable to narrow my search to individuals below the age of 18.
 
-```{r load person-level data analysis, message=FALSE, results='hide'}
-person_data <- get_pums(variables = c("AGEP", 
+`filter(AGEP < 18) %>%`
+
+
+```{r load person-level data, message=FALSE, results='hide'}
+personU18_data <- get_pums(variables = c("AGEP", 
                             "SCH", 
                             "SCHG", 
                             "FDDRSP"),
@@ -42,40 +45,47 @@ person_data <- get_pums(variables = c("AGEP",
 ```
 
 ```{r}
-person_data
+personU18_data
 ```
-My person-level dataset has 25,993 rows, which mean my analysis will include 25,993 students.
+My first dataset has 25,993 rows, which mean my analysis will include **25,993 underage individuals**.
 
-##   Household-Level Data Analysis 
 
-6. **Presence of persons under 18** (R18) (categorical)
-7. **Access to internet connection** (ACCESS) (categorical)
-8. **Grandparent-headed household with no parent present** (NPP) (categorical)
-9. **Limited English-speaking household** (LNGI) (categorical)
+For my second dataset, I'm considering variables *1,4,5 and 6*, applying a filter to the **AGEP** variable to narrow my search to individuals of age 50 and up, as it is the average age at first-grandchild in the U.S., according to the **American Association of Retired Persons 2018 Survey**. 
+https://www.aarp.org/content/dam/aarp/research/surveys_statistics/life-leisure/2019/aarp-grandparenting-study.doi.10.26419-2Fres.00289.001.pdf
 
-```{r load household-level data, message=FALSE, results = 'hide',}
-hh_data <- get_pums(variables = c("R18",
-                        "ACCESS",
-                        "NPP", 
-                        "LNGI"),
-                    
-                        state = "IL",
-                        year = 2018,
+`filter(AGEP > 64) %>%`
+
+
+I'm also setting up my dataset so it discards all N/A results in my **GCR** variable (*5*), with a N/A troubleshoot resource shared to me by Adriana Lasso-Harrier, also supported by our TF, Sara Tufter.
+
+`O50_wgrandchild <- personO50_data[personO50_data$GCR_label!= "N/A (less than 30 years/institutional GQ/grandparent not living with grandchild)",]`
+
+
+```{r message=FALSE, include=TRUE, results='hide'}
+personO50_data <- get_pums(variables = c("AGEP", 
+                            "GCR",
+                            "PINCP",
+                            "FDDRSP"),
+                        state = "IL", 
+                        year = 2018, 
                         survey = "acs1",
                         recode = TRUE) %>%
-  
-  select(R18_label, ACCESS_label, NPP_label, LNGI_label)
+  filter(AGEP > 49) %>%
+  select(AGEP, GCR_label,PINCP, FDDRSP_label)
+
+O50_wgrandchild <- personO50_data[personO50_data$GCR_label!= "N/A (less than 30 years/institutional GQ/grandparent not living with grandchild)",]
 ```
+
 
 ```{r}
-hh_data
+O50_wgrandchild
 ```
 
-My household-level dataset has 126,456 rows, which mean my analysis will include 126,456 households.
+My second dataset has 2001 rows, which mean my analysis will include **2001 grandparents of age 50 and above**.
 
 For both datasets, I'll save them as a CSV files so I can use them later.
 
 ```{r}
-write_csv(person_data, "u18people.csv")
-write_csv(hh_data, "households.csv")
+write_csv(personU18_data, "u18people.csv")
+write_csv(O50_wgrandchild, "O65people.csv")
 ```

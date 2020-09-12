@@ -375,17 +375,18 @@ library(tidyverse)
 library(dplyr)</code></pre>
 <div id="variables-used" class="section level1">
 <h1>Variables Used</h1>
-<p>For this exercise I used multi-level variables from the <strong>American Community Survey 2018</strong>, adding person-level and household-level data (both from the ACS 1-year data) to eventually generate supporting information on the research question, specifically in the state of <strong>Illinois</strong>.</p>
-<div id="person-level-data-analysis" class="section level2">
-<h2>Person-Level Data Analysis</h2>
+<p>For this exercise I used person-level variables from the <strong>American Community Survey 2018</strong> (ACS 1-year data) to eventually generate supporting information on the research question, specifically in the state of <strong>Illinois</strong>. As I developed my analysis on the selected variables, I decided to generate two datasets; one with <strong>underage enrolled students</strong> and another one considering <strong>grandparents of 50 years old and up</strong> in charge of their grandchildren.</p>
 <ol style="list-style-type: decimal">
 <li><strong>Age</strong> (AGEP) (continuous)</li>
 <li><strong>School Enrollment</strong> (SCH) (categorical)</li>
 <li><strong>Grade Level Attending</strong> (SCHG) (categorical)</li>
 <li><strong>Self-care difficulty</strong> (FDDRSP) (categorical)</li>
+<li><strong>Grandparents responsible for grandchildren</strong> (GCR) (categorical)</li>
+<li><strong>Total person’s income</strong> (PINCP) (continuous)</li>
 </ol>
-<p>As I developed my dataset, I decided to apply a filter to narrow my search to <strong>underage enrolled students</strong> (&lt;18 y/o)</p>
-<pre class="r"><code>person_data &lt;- get_pums(variables = c(&quot;AGEP&quot;, 
+<p>For this first dataset, I’m only considering variables <em>1,2,3 and 4</em>, applying a filter to the <em>AGEP</em> variable to narrow my search to individuals below the age of 18.</p>
+<p><code>filter(AGEP &lt; 18) %&gt;%</code></p>
+<pre class="r"><code>personU18_data &lt;- get_pums(variables = c(&quot;AGEP&quot;, 
                             &quot;SCH&quot;, 
                             &quot;SCHG&quot;, 
                             &quot;FDDRSP&quot;),
@@ -395,7 +396,7 @@ library(dplyr)</code></pre>
                         recode = TRUE) %&gt;%
   filter(AGEP &lt; 18) %&gt;%
   select(AGEP, SCH_label, SCHG_label, FDDRSP_label)</code></pre>
-<pre class="r"><code>person_data</code></pre>
+<pre class="r"><code>personU18_data</code></pre>
 <pre><code>## # A tibble: 25,993 x 4
 ##     AGEP SCH_label                            SCHG_label            FDDRSP_label
 ##    &lt;dbl&gt; &lt;chr&gt;                                &lt;chr&gt;                 &lt;chr&gt;       
@@ -410,47 +411,42 @@ library(dplyr)</code></pre>
 ##  9    15 Yes, private school or college or h… Grade 10              No          
 ## 10    14 Yes, public school or public college Grade 10              No          
 ## # … with 25,983 more rows</code></pre>
-<p>My person-level dataset has 25,993 rows, which mean my analysis will include 25,993 students.</p>
-</div>
-<div id="household-level-data-analysis" class="section level2">
-<h2>Household-Level Data Analysis</h2>
-<ol start="6" style="list-style-type: decimal">
-<li><strong>Presence of persons under 18</strong> (R18) (categorical)</li>
-<li><strong>Access to internet connection</strong> (ACCESS) (categorical)</li>
-<li><strong>Grandparent-headed household with no parent present</strong> (NPP) (categorical)</li>
-<li><strong>Limited English-speaking household</strong> (LNGI) (categorical)</li>
-</ol>
-<pre class="r"><code>hh_data &lt;- get_pums(variables = c(&quot;R18&quot;,
-                        &quot;ACCESS&quot;,
-                        &quot;NPP&quot;, 
-                        &quot;LNGI&quot;),
-                    
-                        state = &quot;IL&quot;,
-                        year = 2018,
+<p>My first dataset has 25,993 rows, which mean my analysis will include <strong>25,993 underage individuals</strong>.</p>
+<p>For my second dataset, I’m considering variables <em>1,4,5 and 6</em>, applying a filter to the <strong>AGEP</strong> variable to narrow my search to individuals of age 50 and up, as it is the average age at first-grandchild in the U.S., according to the <strong>American Association of Retired Persons 2018 Survey</strong>. <a href="https://www.aarp.org/content/dam/aarp/research/surveys_statistics/life-leisure/2019/aarp-grandparenting-study.doi.10.26419-2Fres.00289.001.pdf" class="uri">https://www.aarp.org/content/dam/aarp/research/surveys_statistics/life-leisure/2019/aarp-grandparenting-study.doi.10.26419-2Fres.00289.001.pdf</a></p>
+<p><code>filter(AGEP &gt; 64) %&gt;%</code></p>
+<p>I’m also setting up my dataset so it discards all N/A results in my <strong>GCR</strong> variable (<em>5</em>), with a N/A troubleshoot resource shared to me by Adriana Lasso-Harrier, also supported by our TF, Sara Tufter.</p>
+<p><code>O50_wgrandchild &lt;- personO50_data[personO50_data$GCR_label!= &quot;N/A (less than 30 years/institutional GQ/grandparent not living with grandchild)&quot;,]</code></p>
+<pre class="r"><code>personO50_data &lt;- get_pums(variables = c(&quot;AGEP&quot;, 
+                            &quot;GCR&quot;,
+                            &quot;PINCP&quot;,
+                            &quot;FDDRSP&quot;),
+                        state = &quot;IL&quot;, 
+                        year = 2018, 
                         survey = &quot;acs1&quot;,
                         recode = TRUE) %&gt;%
-  
-  select(R18_label, ACCESS_label, NPP_label, LNGI_label)</code></pre>
-<pre class="r"><code>hh_data</code></pre>
-<pre><code>## # A tibble: 126,456 x 4
-##    R18_label       ACCESS_label    NPP_label       LNGI_label     
-##    &lt;chr&gt;           &lt;chr&gt;           &lt;chr&gt;           &lt;chr&gt;          
-##  1 N/A (GQ/vacant) N/A (GQ/vacant) N/A (GQ/vacant) N/A (GQ/vacant)
-##  2 N/A (GQ/vacant) N/A (GQ/vacant) N/A (GQ/vacant) N/A (GQ/vacant)
-##  3 N/A (GQ/vacant) N/A (GQ/vacant) N/A (GQ/vacant) N/A (GQ/vacant)
-##  4 N/A (GQ/vacant) N/A (GQ/vacant) N/A (GQ/vacant) N/A (GQ/vacant)
-##  5 N/A (GQ/vacant) N/A (GQ/vacant) N/A (GQ/vacant) N/A (GQ/vacant)
-##  6 N/A (GQ/vacant) N/A (GQ/vacant) N/A (GQ/vacant) N/A (GQ/vacant)
-##  7 N/A (GQ/vacant) N/A (GQ/vacant) N/A (GQ/vacant) N/A (GQ/vacant)
-##  8 N/A (GQ/vacant) N/A (GQ/vacant) N/A (GQ/vacant) N/A (GQ/vacant)
-##  9 N/A (GQ/vacant) N/A (GQ/vacant) N/A (GQ/vacant) N/A (GQ/vacant)
-## 10 N/A (GQ/vacant) N/A (GQ/vacant) N/A (GQ/vacant) N/A (GQ/vacant)
-## # … with 126,446 more rows</code></pre>
-<p>My household-level dataset has 126,456 rows, which mean my analysis will include 126,456 households.</p>
+  filter(AGEP &gt; 49) %&gt;%
+  select(AGEP, GCR_label,PINCP, FDDRSP_label)
+
+O50_wgrandchild &lt;- personO50_data[personO50_data$GCR_label!= &quot;N/A (less than 30 years/institutional GQ/grandparent not living with grandchild)&quot;,]</code></pre>
+<pre class="r"><code>O50_wgrandchild</code></pre>
+<pre><code>## # A tibble: 2,001 x 4
+##     AGEP GCR_label  PINCP FDDRSP_label
+##    &lt;dbl&gt; &lt;chr&gt;      &lt;dbl&gt; &lt;chr&gt;       
+##  1    57 No         12000 No          
+##  2    57 No         12000 No          
+##  3    57 No         12000 No          
+##  4    57 No         12000 No          
+##  5    76 Yes        51200 No          
+##  6    76 No        144000 No          
+##  7    77 No          9400 No          
+##  8    84 No         20400 No          
+##  9    61 No         17000 No          
+## 10    59 No             0 No          
+## # … with 1,991 more rows</code></pre>
+<p>My second dataset has 2001 rows, which mean my analysis will include <strong>2001 grandparents of age 50 and above</strong>.</p>
 <p>For both datasets, I’ll save them as a CSV files so I can use them later.</p>
-<pre class="r"><code>write_csv(person_data, &quot;u18people.csv&quot;)
-write_csv(hh_data, &quot;households.csv&quot;)</code></pre>
-</div>
+<pre class="r"><code>write_csv(personU18_data, &quot;u18people.csv&quot;)
+write_csv(O50_wgrandchild, &quot;O65people.csv&quot;)</code></pre>
 </div>
 
 
