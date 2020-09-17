@@ -1,0 +1,361 @@
+---
+title: "Assignment 2: Calculations"
+author: "Cristina Davila Gonzalez"
+date: "9/14/2020"
+output: html_document
+
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(ggplot2)
+```
+
+# Assignment 1 datasets
+```{r message=FALSE, results='hide'}
+u18people_data <-read_csv("u18people.csv")
+o50people_data <-read_csv("O50people.csv")
+```
+
+even though this is a calculations-only document, I've decided to properly identify all of them for future consultations.
+
+# Continuous variables - Summary & Individual Parts
+
+## 1. **Age**
+
+    1.1 Age of population under 18 within tract: AGEP in u18people_data
+
+```{r message=FALSE, results='hide'}
+u18people_summary <- summary(u18people_data$AGEP)
+u18people_summary
+```
+
+Mean
+```{r message=FALSE, results='hide'}
+mean(u18people_data$AGEP)
+```
+
+Sample Standard Deviation 
+```{r message=FALSE, results='hide'}
+sd(u18people_data$AGEP)
+```
+
+95-percent Confidence Interval
+```{r message=FALSE, results='hide'}
+conf_int <- t.test(u18people_data$AGEP)
+conf_int
+```
+
+Center of 95-percent Confidence Interval
+```{r message=FALSE, results='hide'}
+conf_int$estimate
+```
+
+Histogram
+```{r message=FALSE, results='hide'}
+ggplot(u18people_data, aes(x = AGEP)) +
+  geom_histogram() +
+ scale_x_continuous(name = "Age of people under 18 within tract") +
+   theme_minimal()
+```
+
+    1.2 **Age** of population over 50 within tract:  AGEP in o50people_data
+    
+```{r message=FALSE, results='hide'}
+
+o50people_summary <- summary(o50people_data$AGEP)
+o50people_summary
+```
+
+Mean
+```{r message=FALSE, results='hide'}
+mean(o50people_data$AGEP)
+```
+
+Sample Standard Deviation 
+```{r message=FALSE, results='hide'}
+sd(o50people_data$AGEP)
+```
+
+95-percent Confidence Interval
+```{r message=FALSE, results='hide'}
+conf_int <- t.test(o50people_data$AGEP)
+conf_int
+```
+
+Center of 95-percent Confidence Interval
+```{r message=FALSE, results='hide'}
+conf_int$estimate
+```
+
+Histogram
+```{r message=FALSE, results='hide'}
+ggplot(o50people_data, aes(x = AGEP)) +
+  geom_histogram() +
+ scale_x_continuous(name = "Age of people over 50 within tract") +
+   theme_minimal()
+```
+
+## 6. **Total person's income**: PINCP in o50people_data
+
+```{r message=FALSE, results='hide'}
+
+o50people_summary <- summary(o50people_data$PINCP)
+o50people_summary
+```
+
+Mean
+```{r message=FALSE, results='hide'}
+mean(o50people_data$PINCP)
+```
+
+Sample Standard Deviation 
+```{r message=FALSE, results='hide'}
+sd(o50people_data$PINCP)
+```
+
+95-percent Confidence Interval
+```{r message=FALSE, results='hide'}
+conf_int <- t.test(o50people_data$PINCP)
+conf_int
+```
+
+Center of 95-percent Confidence Interval
+```{r message=FALSE, results='hide'}
+conf_int$estimate
+```
+
+Histogram
+```{r message=FALSE, results='hide'}
+ggplot(o50people_data, aes(x = PINCP)) +
+  geom_histogram() +
+ scale_x_continuous(name = "Total person's income") +
+   theme_minimal()
+```
+
+# Categorical variables - Proportions
+
+## 2. **School Enrollment**: SCH_label in u18people_data
+
+Possible Values
+```{r message=FALSE, results='hide'}
+unique(u18people_data$SCH_label)
+```
+
+Number of Observations
+```{r message=FALSE, results='hide'}
+table(u18people_data$SCH_label)
+```
+
+
+Proportions of Observations
+```{r message=FALSE, results='hide'}
+table(u18people_data$SCH_label) / sum(table(u18people_data$SCH_label))
+```
+
+95-percent Confidence Interval of each category
+
+ N/A (less than 3 years old)
+```{r message=FALSE, results='hide'}
+t.test(u18people_data$SCH_label == "N/A (less than 3 years old)")
+```
+
+ No, has not attended in the last 3 months
+```{r message=FALSE, results='hide'}
+t.test(u18people_data$SCH_label == "No, has not attended in the last 3 months)")
+```
+ 
+ Yes, private school or college or home school
+```{r message=FALSE, results='hide'}
+t.test(u18people_data$SCH_label == "Yes, private school or college or home school")
+```
+
+ Yes, public school or public college 
+```{r message=FALSE, results='hide'}
+t.test(u18people_data$SCH_label == "Yes, public school or public college")
+```
+
+## 3. **Grade Level Attending**: SCHG_label in u18people_data
+
+Possible Values
+```{r message=FALSE, results='hide'}
+unique(u18people_data$SCHG_label)
+```
+
+Number of Observations
+```{r message=FALSE, results='hide'}
+table(u18people_data$SCHG_label)
+```
+
+Proportions of Observations
+```{r message=FALSE, results='hide'}
+table(u18people_data$SCHG_label) / sum(table(u18people_data$SCHG_label))
+```
+
+95-percent Confidence Interval of each category
+
+ N/A (not attending school)
+```{r message=FALSE, results='hide'}
+t.test(u18people_data$SCHG_label == "N/A (not attending school)")
+```
+
+ Nursery school/preschool
+```{r message=FALSE, results='hide'}
+t.test(u18people_data$SCHG_label == "Nursery school/preschool")
+```
+ 
+ Kindergarten
+```{r message=FALSE, results='hide'}
+t.test(u18people_data$SCHG_label == "Kindergarten")
+```
+
+ Grade 1 
+```{r message=FALSE, results='hide'}
+t.test(u18people_data$SCHG_label == "Grade 1")
+```
+
+ Grade 2 
+```{r message=FALSE, results='hide'}
+t.test(u18people_data$SCHG_label == "Grade 2")
+```
+
+ Grade 3 
+```{r message=FALSE, results='hide'}
+t.test(u18people_data$SCHG_label == "Grade 1")
+```
+
+ Grade 4 
+```{r message=FALSE, results='hide'}
+t.test(u18people_data$SCHG_label == "Grade 4")
+```
+
+
+ Grade 5 
+```{r message=FALSE, results='hide'}
+t.test(u18people_data$SCHG_label == "Grade 5")
+```
+
+ Grade 6 
+```{r message=FALSE, results='hide'}
+t.test(u18people_data$SCHG_label == "Grade 6")
+```
+
+ Grade 7 
+```{r message=FALSE, results='hide'}
+t.test(u18people_data$SCHG_label == "Grade 7")
+```
+
+ Grade 8 
+```{r message=FALSE, results='hide'}
+t.test(u18people_data$SCHG_label == "Grade 8")
+```
+
+ Grade 9 
+```{r message=FALSE, results='hide'}
+t.test(u18people_data$SCHG_label == "Grade 9")
+```
+
+ Grade 10 
+```{r message=FALSE, results='hide'}
+t.test(u18people_data$SCHG_label == "Grade 10")
+```
+
+ Grade 11 
+```{r message=FALSE, results='hide'}
+t.test(u18people_data$SCHG_label == "Grade 11")
+```
+
+ Grade 12 
+```{r message=FALSE, results='hide'}
+t.test(u18people_data$SCHG_label == "Grade 12")
+```
+
+## 4. **Self-care difficulty** 
+
+    4.1 Self-care difficulty in population under 18 within tract: FDDRSP_label in u18people_data
+
+Possible Values
+```{r message=FALSE, results='hide'}
+unique(u18people_data$FDDRSP_label)
+```
+
+Number of Observations
+```{r message=FALSE, results='hide'}
+table(u18people_data$FDDRSP_label)
+```
+
+Proportions of Observations
+```{r message=FALSE, results='hide'}
+table(u18people_data$FDDRSP_label) / sum(table(u18people_data$FDDRSP_label))
+```
+
+95-percent Confidence Interval of each category
+
+ No
+```{r message=FALSE, results='hide'}
+t.test(u18people_data$FDDRSP_label == "No")
+```
+
+ Yes
+```{r message=FALSE, results='hide'}
+t.test(u18people_data$FDDRSP_label == "Yes")
+```
+
+    4.2 Self-care difficulty in population over 50 within tract: FDDRSP_label in o65people_data
+    
+Possible Values
+```{r message=FALSE, results='hide'}
+unique(o50people_data$FDDRSP_label)
+```
+
+Number of Observations
+```{r message=FALSE, results='hide'}
+table(o50people_data$FDDRSP_label)
+```
+
+Proportions of Observations
+```{r message=FALSE, results='hide'}
+table(o50people_data$FDDRSP_label) / sum(table(o50people_data$FDDRSP_label))
+```
+
+95-percent Confidence Interval of each category
+
+ No
+```{r message=FALSE, results='hide'}
+t.test(o50people_data$FDDRSP_label == "No")
+```
+
+ Yes
+```{r message=FALSE, results='hide'}
+t.test(o50people_data$FDDRSP_label == "Yes")
+```
+    
+## 5. **Grandparents responsible for grandchildren**: 
+
+Possible Values
+```{r message=FALSE, results='hide'}
+unique(o50people_data$GCR_label)
+```
+
+Number of Observations
+```{r message=FALSE, results='hide'}
+table(o50people_data$GCR_label)
+```
+
+Proportions of Observations
+```{r message=FALSE, results='hide'}
+table(o50people_data$GCR_label) / sum(table(o50people_data$GCR_label))
+```
+
+95-percent Confidence Interval of each category
+
+ No
+```{r message=FALSE, results='hide'}
+t.test(o50people_data$GCR_label == "No")
+```
+
+ Yes
+```{r message=FALSE, results='hide'}
+t.test(o50people_data$GCR_label == "Yes")
+```
+

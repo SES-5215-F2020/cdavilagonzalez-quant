@@ -1,0 +1,400 @@
+---
+title: "Assignment 2 : Grandparents on duty - Report"
+author: "Cristina Davila Gonzalez"
+date: "9/15/2020"
+output: html_document
+---
+```{r setup, include=FALSE}
+library(tidyverse)
+library(ggplot2)
+```
+
+# Grandparents on duty: datasets and variables
+
+*On this year's Back to School season, most of public schools worldwide have decided to go remote. Coming from a current context of diaspora and mass migration of young/adult professionals,  where sometimes elders are left in charge of their grandchildren, I decided to take a look at similar family scenarios in the U.S. where grandparents are a key factor in making remote-learning feasible for their underage relatives.*
+
+For this exercise I used person-level variables from the **American Community Survey 2018** (ACS 1-year data) to eventually generate supporting information on the research question, specifically in the state of **Illinois**. As I developed my analysis on the selected variables, I decided to generate two datasets; one with **underage enrolled students** and another one considering **grandparents of 50 years old and up** in charge of their grandchildren. 
+
+Regarding the age interval selected for the grandparents dataset, I initially wanted to set the age in 65 and up, however, during the previous assignment I realized I could consider more individuals than the 813 resulted from this first analysis of variables. This led to the consideration of a lower number, and after investigating more on senior communities in the U.S., I decided to set 50 years as my base age, as according to the **American Association of Retired Persons 2018 Survey**, it is also the average age at first-grandchild in the country.
+
+```{r}
+u18people_data <-read_csv("u18people.csv")
+o50people_data <-read_csv("O50people.csv")
+```
+
+## List of Variables
+
+1. **Age** (AGEP) (continuous)
+  1.1 Age of population under 18 within tract
+  1.2 Age of population over 50 within tract
+2. **School Enrollment** (SCH) (categorical)
+3. **Grade Level Attending** (SCHG) (categorical)
+4. **Self-care difficulty** (FDDRSP) (categorical)
+  4.1 Self-care difficulty on population under 18 within tract
+  4.2 Self-care difficulty on population over 50 within tract
+5. **Grandparents responsible for grandchildren** (GCR) (categorical)
+6. **Total person's income** (PINCP) (continuous)
+
+# Distribution of Continuous Variables
+
+## Descriptive statistics
+
+Calculation of variables summaries
+```{r}
+ageu18_summary <-summary(u18people_data$AGEP)
+ageu18_conf_int <- t.test(u18people_data$AGEP)
+ageu18_sd <-sd(u18people_data$AGEP)
+ageo50_summary <-summary(o50people_data$AGEP)
+ageo50_conf_int <- t.test(o50people_data$AGEP)
+ageo50_sd <-sd(o50people_data$AGEP)
+income_summary <-summary(o50people_data$PINCP)
+income_conf_int <-t.test(o50people_data$PINCP)
+income_sd <-sd(o50people_data$PINCP)
+```
+
+Display of variables summaries
+```{r}
+summary_table <- tibble(
+  Statistic = c("Sample mean", 
+                "Median",
+                "Standard deviation",
+                "Interquartile range",
+                "Population mean (95% confidence)"),
+  `Median age: Underage Students (< 18 years)` = c(prettyNum(ageu18_summary["Mean"], digits=3),
+                           ageu18_summary["Median"],
+                           prettyNum(ageu18_sd, digits = 3),
+                           paste(ageu18_summary["1st Qu."],"to", 
+                                 ageu18_summary["3rd Qu."]),
+                           paste(prettyNum(ageu18_conf_int$conf.int[1],
+                                           digits=3), "to",
+                                 prettyNum(ageu18_conf_int$conf.int[2],
+                                               digits=3))),
+ `Median age: Potential Grandparents (>50)` = c(prettyNum(ageo50_summary["Mean"], digits=3),
+                           ageo50_summary["Median"],
+                           prettyNum(ageo50_sd, digits = 3),
+                           paste(ageo50_summary["1st Qu."],"to", 
+                                 ageo50_summary["3rd Qu."]),
+                           paste(prettyNum(ageo50_conf_int$conf.int[1],
+                                           digits=3), "to",
+                                 prettyNum(ageo50_conf_int$conf.int[2],
+                                               digits=3))),
+ `Total Grandparent's income (>50)` = c(prettyNum(income_summary["Mean"], digits=3),
+                           income_summary["Median"],
+                           prettyNum(income_sd, digits = 3),
+                           paste(income_summary["1st Qu."],"to", 
+                                 income_summary["3rd Qu."]),
+                           paste(prettyNum(income_conf_int$conf.int[1],
+                                           digits=3), "to",
+                                 prettyNum(income_conf_int$conf.int[2],
+                                               digits=3))))  
+  
+knitr::kable(summary_table, caption = "Characteristics of census tracts in Illinois")
+```
+
+## Histograms
+
+### Median Age: Underage Students
+```{r}
+ggplot(u18people_data, aes(x = AGEP)) + 
+  geom_histogram(fill= "gray", color="#e9ecef", binwidth = 2) +
+  theme_minimal() +
+  scale_x_continuous(name = "Median Age of students under 18 yearsin tract") + 
+  scale_y_continuous(name = "Number of people in sample") 
+```
+### Median Age: Potential Grandparents
+```{r}
+ggplot(o50people_data, aes(x = AGEP)) + 
+  geom_histogram(fill= "gray", color="#e9ecef", binwidth = 2) +
+  theme_minimal() +
+  scale_x_continuous(name = "Median Age of people over 50 years in tract") + 
+  scale_y_continuous(name = "Number of people in sample") 
+```
+
+### Total Potential Grandparent's Income
+
+```{r }
+ggplot(o50people_data, aes(x = PINCP)) + 
+  geom_histogram(fill= "gray", color="#e9ecef", bins = 30) +
+  theme_minimal() +
+  scale_x_continuous(name = "Total Income") + 
+  scale_y_continuous(name = "Number of people in sample") 
+```
+
+# Distribution of Categorical Variables
+
+## School Enrollment
+
+T-test for each individual category
+```{r message=FALSE, results='hide'}
+na_less3 <- t.test(u18people_data$SCH_label == "N/A (less than 3 years old)")
+no_attend <- t.test(u18people_data$SCH_label == "No, has not attended in the last 3 months)")
+yes_private <- t.test(u18people_data$SCH_label == "Yes, private school or college or home school")
+yes_public <- t.test(u18people_data$SCH_label == "Yes, public school or public college")
+```
+
+Table of proportions and confidence intervals
+```{r message=FALSE, results='hide'}
+enroll_shares <- tibble(`School Enrollment` = c("N/A (less than 3 years old)",
+                                  "No, has not attended in the last 3 months)",
+                                  "Yes, private school or college or home school",
+                                  "Yes, public school or public college"),
+                 `Sample proportion` = c(paste(prettyNum(na_less3$estimate*100, 
+                                                         digits = 3), "%"),
+                                         paste(prettyNum(no_attend$estimate*100, 
+                                                         digits = 3), "%"),
+                                         paste(prettyNum(yes_private$estimate*100, 
+                                                         digits = 3), "%"),
+                                         paste(prettyNum(yes_public$estimate*100, 
+                                                         digits = 3), "%")),
+                 `95-percent confidence interval` = c(
+                   paste(prettyNum(na_less3$conf.int[1]*100, digits=3),
+                         "% to ",
+                         prettyNum(na_less3$conf.int[2]*100, digits=3),
+                         "%", sep=""),
+                   paste(prettyNum(no_attend$conf.int[1]*100, digits=3),
+                         "% to ",
+                         prettyNum(no_attend$conf.int[2]*100, digits=3),
+                         "%", sep=""),
+                   paste(prettyNum(yes_private$conf.int[1]*100, digits=3),
+                         "% to ",
+                         prettyNum(yes_private$conf.int[2]*100, digits=3),
+                         "%", sep=""),
+                   paste(prettyNum(yes_public$conf.int[1]*100, digits=3),
+                         "% to ",
+                         prettyNum(yes_public$conf.int[2]*100, digits=3),
+                         "%", sep="")))
+                   
+                   
+knitr::kable(enroll_shares, caption = "Census tracts in Illinois")
+```
+
+## Grade Level Attending
+
+T-test for each individual category
+```{r message=FALSE, results='hide'}
+na_noattend <- t.test(u18people_data$SCHG_label == "N/A (not attending school)")
+nursery_pre <- t.test(u18people_data$SCHG_label == "Nursery school/preschool")
+k_garten <- t.test(u18people_data$SCHG_label == "Kindergarten")
+grade_1 <- t.test(u18people_data$SCHG_label == "Grade 1")
+grade_2 <- t.test(u18people_data$SCHG_label == "Grade 2")
+grade_3 <- t.test(u18people_data$SCHG_label == "Grade 3")
+grade_4 <- t.test(u18people_data$SCHG_label == "Grade 4")
+grade_5 <- t.test(u18people_data$SCHG_label == "Grade 5")
+grade_6 <- t.test(u18people_data$SCHG_label == "Grade 6")
+grade_7 <- t.test(u18people_data$SCHG_label == "Grade 7")
+grade_8 <- t.test(u18people_data$SCHG_label == "Grade 8")
+grade_9 <- t.test(u18people_data$SCHG_label == "Grade 9")
+grade_10 <- t.test(u18people_data$SCHG_label == "Grade 10")
+grade_11 <- t.test(u18people_data$SCHG_label == "Grade 11")
+grade_12 <- t.test(u18people_data$SCHG_label == "Grade 12")
+under_grad <- t.test(u18people_data$SCHG_label == "College undergraduate years (freshman to senior)")
+```
+
+Table of proportions and confidence intervals
+```{r}
+grade_shares <- tibble(`Grade Level Attending` = c("N/A (not attending school)",
+                                  "Nursery school/preschool",
+                                  "Kindergarten",
+                                  "Grade 1",
+                                  "Grade 2",
+                                  "Grade 3",
+                                  "Grade 4",
+                                  "Grade 5",
+                                  "Grade 6",
+                                  "Grade 7",
+                                  "Grade 8",
+                                  "Grade 9",
+                                  "Grade 10",
+                                  "Grade 11",
+                                  "Grade 12",
+                                  "College undergraduate years"),
+                 `Sample proportion` = c(paste(prettyNum(na_noattend$estimate*100, 
+                                                         digits = 3), "%"),
+                                         paste(prettyNum(nursery_pre$estimate*100, 
+                                                         digits = 3), "%"),
+                                          paste(prettyNum(k_garten$estimate*100, 
+                                                         digits = 3), "%"),
+                                         paste(prettyNum(grade_1$estimate*100, 
+                                                         digits = 3), "%"),
+                                         paste(prettyNum(grade_2$estimate*100, 
+                                                         digits = 3), "%"),
+                                          paste(prettyNum(grade_3$estimate*100, 
+                                                         digits = 3), "%"),
+                                         paste(prettyNum(grade_4$estimate*100, 
+                                                         digits = 3), "%"),
+                                         paste(prettyNum(grade_5$estimate*100, 
+                                                         digits = 3), "%"),
+                                         paste(prettyNum(grade_6$estimate*100, 
+                                                         digits = 3), "%"),
+                                         paste(prettyNum(grade_7$estimate*100, 
+                                                         digits = 3), "%"),
+                                         paste(prettyNum(grade_8$estimate*100, 
+                                                         digits = 3), "%"),
+                                         paste(prettyNum(grade_9$estimate*100, 
+                                                         digits = 3), "%"),
+                                         paste(prettyNum(grade_10$estimate*100, 
+                                                         digits = 3), "%"),
+                                         paste(prettyNum(grade_11$estimate*100, 
+                                                         digits = 3), "%"),
+                                         paste(prettyNum(grade_12$estimate*100, 
+                                                         digits = 3), "%"),
+                                         paste(prettyNum(under_grad$estimate*100, 
+                                                         digits = 3), "%")),
+                 `95-percent confidence interval` = c(
+                   paste(prettyNum(na_noattend$conf.int[1]*100, digits=3),
+                         "% to ",
+                         prettyNum(na_noattend$conf.int[2]*100, digits=3),
+                         "%", sep=""),
+                   paste(prettyNum(nursery_pre$conf.int[1]*100, digits=3),
+                         "% to ",
+                         prettyNum(nursery_pre$conf.int[2]*100, digits=3),
+                         "%", sep=""),
+                   paste(prettyNum(k_garten$conf.int[1]*100, digits=3),
+                         "% to ",
+                         prettyNum(k_garten$conf.int[2]*100, digits=3),
+                         "%", sep=""),
+                   paste(prettyNum(grade_1$conf.int[1]*100, digits=3),
+                         "% to ",
+                         prettyNum(grade_1$conf.int[2]*100, digits=3),
+                         "%", sep=""),
+                   paste(prettyNum(grade_2$conf.int[1]*100, digits=3),
+                         "% to ",
+                         prettyNum(grade_2$conf.int[2]*100, digits=3),
+                         "%", sep=""),
+                   paste(prettyNum(grade_3$conf.int[1]*100, digits=3),
+                         "% to ",
+                         prettyNum(grade_3$conf.int[2]*100, digits=3),
+                         "%", sep=""),
+                   paste(prettyNum(grade_4$conf.int[1]*100, digits=3),
+                         "% to ",
+                         prettyNum(grade_4$conf.int[2]*100, digits=3),
+                         "%", sep=""),
+                   paste(prettyNum(grade_5$conf.int[1]*100, digits=3),
+                         "% to ",
+                         prettyNum(grade_5$conf.int[2]*100, digits=3),
+                         "%", sep=""),
+                   paste(prettyNum(grade_6$conf.int[1]*100, digits=3),
+                         "% to ",
+                         prettyNum(grade_6$conf.int[2]*100, digits=3),
+                         "%", sep=""),
+                   paste(prettyNum(grade_7$conf.int[1]*100, digits=3),
+                         "% to ",
+                         prettyNum(grade_7$conf.int[2]*100, digits=3),
+                         "%", sep=""),
+                   paste(prettyNum(grade_8$conf.int[1]*100, digits=3),
+                         "% to ",
+                         prettyNum(grade_8$conf.int[2]*100, digits=3),
+                         "%", sep=""),
+                   paste(prettyNum(grade_9$conf.int[1]*100, digits=3),
+                         "% to ",
+                         prettyNum(grade_9$conf.int[2]*100, digits=3),
+                         "%", sep=""),
+                   paste(prettyNum(grade_10$conf.int[1]*100, digits=3),
+                         "% to ",
+                         prettyNum(grade_10$conf.int[2]*100, digits=3),
+                         "%", sep=""),
+                   paste(prettyNum(grade_11$conf.int[1]*100, digits=3),
+                         "% to ",
+                         prettyNum(grade_11$conf.int[2]*100, digits=3),
+                         "%", sep=""),
+                   paste(prettyNum(grade_12$conf.int[1]*100, digits=3),
+                         "% to ",
+                         prettyNum(grade_12$conf.int[2]*100, digits=3),
+                         "%", sep=""),
+                   paste(prettyNum(under_grad$conf.int[1]*100, digits=3),
+                         "% to ",
+                         prettyNum(under_grad$conf.int[2]*100, digits=3),
+                         "%", sep="")))
+                   
+                   
+knitr::kable(grade_shares, caption = "Census tracts in Illinois")
+```
+
+## Self care difficulty
+
+### Self-care difficulty in population under 18 within tract:
+
+T-test for each individual category
+```{r}
+yes_diff18 <- t.test(u18people_data$FDDRSP_label == "Yes")
+no_diff18 <- t.test(u18people_data$FDDRSP_label == "No")
+```
+
+Table of proportions and confidence intervals
+```{r}
+scd18_shares <- tibble(`Self care difficulty (underage)` = c("Yes", "No"),
+                 `Sample proportion` = c(paste(prettyNum(yes_diff18$estimate*100, 
+                                                         digits = 3), "%"),
+                                         paste(prettyNum(no_diff18$estimate*100, 
+                                                         digits = 3), "%")),
+                 `95-percent confidence interval` = c(
+                   paste(prettyNum(yes_diff18$conf.int[1]*100, digits=3),
+                         "% to ",
+                         prettyNum(yes_diff18$conf.int[2]*100, digits=3),
+                         "%", sep=""),
+                   paste(prettyNum(no_diff18$conf.int[1]*100, digits=3),
+                         "% to ",
+                         prettyNum(no_diff18$conf.int[2]*100, digits=3),
+                         "%", sep="")))
+                   
+                   
+knitr::kable(scd18_shares, caption = "Census tracts in Illinois")
+```
+
+### Self-care difficulty in population over 50 within tract:
+
+T-test for each individual category
+```{r}
+yes_diff50 <- t.test(o50people_data$FDDRSP_label == "Yes")
+no_diff50 <- t.test(o50people_data$FDDRSP_label == "No")
+```
+
+Table of proportions and confidence intervals
+```{r}
+scd50_shares <- tibble(`Self care difficulty (over 50)` = c("Yes", "No"),
+                 `Sample proportion` = c(paste(prettyNum(yes_diff50$estimate*100, 
+                                                         digits = 3), "%"),
+                                         paste(prettyNum(no_diff50$estimate*100, 
+                                                         digits = 3), "%")),
+                 `95-percent confidence interval` = c(
+                   paste(prettyNum(yes_diff50$conf.int[1]*100, digits=3),
+                         "% to ",
+                         prettyNum(yes_diff50$conf.int[2]*100, digits=3),
+                         "%", sep=""),
+                   paste(prettyNum(no_diff50$conf.int[1]*100, digits=3),
+                         "% to ",
+                         prettyNum(no_diff50$conf.int[2]*100, digits=3),
+                         "%", sep="")))
+                   
+                   
+knitr::kable(scd50_shares, caption = "Census tracts in Illinois")
+```
+
+## Grandparents responsible for grandchildren: GCR_label
+
+T-test for each individual category
+```{r}
+yes_gcr <- t.test(o50people_data$GCR_label == "Yes")
+no_gcr <- t.test(o50people_data$GCR_label == "No")
+```
+
+Table of proportions and confidence intervals
+```{r}
+gcr_shares <- tibble(`Grandparents responsible for grandchildren` = c("Yes", "No"),
+                 `Sample proportion` = c(paste(prettyNum(yes_gcr$estimate*100, 
+                                                         digits = 3), "%"),
+                                         paste(prettyNum(no_gcr$estimate*100, 
+                                                         digits = 3), "%")),
+                 `95-percent confidence interval` = c(
+                   paste(prettyNum(yes_gcr$conf.int[1]*100, digits=3),
+                         "% to ",
+                         prettyNum(yes_gcr$conf.int[2]*100, digits=3),
+                         "%", sep=""),
+                   paste(prettyNum(no_gcr$conf.int[1]*100, digits=3),
+                         "% to ",
+                         prettyNum(no_gcr$conf.int[2]*100, digits=3),
+                         "%", sep="")))
+                   
+                   
+knitr::kable(gcr_shares, caption = "Census tracts in Illinois")
+```
