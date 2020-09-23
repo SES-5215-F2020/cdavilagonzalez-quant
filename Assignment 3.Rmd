@@ -1,0 +1,239 @@
+---
+title: "Assignment 3"
+author: "Cristina Davila Gonzalez"
+date: "9/21/2020"
+output: html_document
+---
+
+# **Grandparents on duty**: Relationships between variables
+
+In this exercise I will analyze the relationships between age, school enrollment, self-care difficulty, grandparents responsible for their grandchildren and their income on the census tract level in the state of Illinois. For that, I'll load all required libraries and datasets used and generated in previous assignments.
+
+```{r, message=FALSE, results='hide'}
+library(tidyverse)
+library(ggplot2)
+library(wesanderson)
+```
+
+```{r, results='hide'}
+u18people_data <-read_csv("u18people.csv")
+o50people_data <-read_csv("O50people.csv")
+```
+
+## List of Variables
+
+1. **Age** (AGEP) (continuous)
+  1.1 Age of population under 18 within tract
+  1.2 Age of population over 50 within tract
+2. **School Enrollment** (SCH_label) (categorical)
+3. **Grade Level Attending** (SCHG_label) (categorical)
+4. **Self-care difficulty** (FDDRSP_label) (categorical)
+  4.1 Self-care difficulty on population under 18 within tract
+  4.2 Self-care difficulty on population over 50 within tract
+5. **Grandparents responsible for grandchildren** (GCR_label) (categorical)
+6. **Total person's income** (PINCP) (continuous)
+
+## Relationship between two continuous variables 
+
+### **Age of population over 50 within tract & Total person's income**: *Pearson's Correlation test* 
+```{r}
+correlation1 <- cor.test(o50people_data$AGEP, o50people_data$PINCP)
+correlation1
+```
+
+The analysis shows a weak, but statistically significant, **negative correlation at a 95% confidence level**. Let's represent this information with a line + scatter plot Chart, also highlighting the specific cases in which grandparents are responsible for their grandchildren, for better legibility:
+
+```{r, results='hide'}
+options(scipen = 999)
+ggplot(o50people_data, aes(x = AGEP, y = PINCP)) + 
+    geom_point(size = 1, alpha = 0.5, position = "jitter", mapping = aes(color = GCR_label)) +
+    geom_smooth(fill="gray", color="gray") +
+    theme_minimal() +
+    scale_y_continuous(name = "Total Person's Income") +
+    scale_x_continuous(name = "Age of population of 50 and over within tract",
+                      breaks = seq(50, 100, by = 10), 
+                      labels = paste("",
+                                  prettyNum(seq(50, 100, by = 10),
+                                            big.mark = ",")))+
+  scale_color_manual(name = "Grandparents\nresponsible for\ngrandchildren",
+                     values = wes_palette("Moonrise1", n = 2),
+                     labels = c("No",
+                                  "Yes"))+
+  theme_minimal()
+  theme(legend.key.size = unit(0.1, "cm"))
+```
+## Relationships between continuous and categorical variables 
+
+### **Age** and all applicable categorical variables
+
+**Age of population under 18 within tract & School Enrollment**: *ANOVA test* 
+```{r}
+anova1 <- aov (AGEP ~ SCH_label, data = u18people_data)
+summary(anova1)
+```
+
+**Age of population under 18 within tract & Grade level attending **: *ANOVA test*
+```{r}
+anova2 <- aov (AGEP ~ SCHG_label, data = u18people_data)
+summary(anova2)
+```
+
+There exists a **significant association between age of under 18, school enrollment and grade-level attendance**, as all p-values fall well below 0.05.
+
+**Age of population under 18 within tract & Self-care difficulty**: *Two sample t-test*
+```{r}
+difference1 <- t.test (AGEP ~ FDDRSP_label, data = u18people_data)
+difference1
+```
+
+There is a **low association found between age of under 18 and self-care difficulty** at a 95% confidence level.
+
+
+**Age of population over 50 within tract & Self-care difficulty**: *Two sample t-test*
+```{r}
+difference2 <- t.test (AGEP ~ FDDRSP_label, data = o50people_data)
+difference2
+```
+with a considerable gap at 95-percent confidence interval, **there is no clear relationship between age of over 50 and self-care difficulty**.
+
+**Age of population over 50 & Grandparents responsible for grandchildren**: *Two sample t-test*
+```{r}
+difference3 = t.test(AGEP ~ GCR_label, data = o50people_data)
+difference3
+```
+Even with a gap of over a unit at the 95-percent confidence interval, **there is still an association between age of over 50 and grandparents responsible for grandchildren**. Let's represent this relationship graphically to support our analysis:
+
+```{r}
+
+ggplot(o50people_data, aes(x = GCR_label, y = AGEP, color = GCR_label)) +
+  geom_violin(color= "grey") +
+  geom_point(position = "jitter",
+             alpha = 0.5,
+             size = 1) +
+  scale_x_discrete(name = "Grandparents responsible for grandchildren",
+                       labels = c("No",
+                                  "Yes")) +
+  scale_y_continuous(name = "Age of population over 50 within tract",
+                     breaks = seq(50, 100, by = 10),
+                     labels = paste(seq(50, 100, by = 10), sep = "")) +
+  scale_color_manual(name = "Grandparents responsible for grandchildren",
+                      values = wes_palette("Moonrise1", n = 2),
+                       labels = c("No",
+                                  "Yes")) +
+
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+### **Total person's income** and all applicable categorical variables
+
+**Total person's income & Self-care difficulty**: *Two sample t-test*
+```{r}
+difference4 <- t.test (PINCP ~ FDDRSP_label, data = o50people_data)
+difference4
+```
+with a p-value 4 times over 0.05, **the relationship is not significant at a 95-percent confidence level**.
+
+**Total person's income & Grandparents responsible for grandchildren**: *Two sample t-test*
+```{r}
+difference5 = t.test(PINCP ~ GCR_label, data = o50people_data)
+difference5
+```
+with a p-value over 0.05, **the relationship is not that significant at a 95-percent confidence level**.
+
+## Relationship between two categorical variables 
+
+### **School enrollment** and applicable categorical variables
+
+**School Enrollment & Grade level attending **: *Chi Square test*
+```{r}
+chi_sq1 <- chisq.test(u18people_data$SCH_label, u18people_data$SCHG_label)
+chi_sq1
+```
+
+```{r}
+chi_sq1$observed
+```
+
+```{r}
+chi_sq1$expected
+```
+with a p-value as small as the reflected in the test and a df value as high as 45, **further approximations are subject to inaccuracy**.
+
+### **School enrollment & self-care difficulty**: *Chi Square test*
+```{r}
+chi_sq2 <- chisq.test(u18people_data$SCH_label, u18people_data$FDDRSP_label)
+chi_sq2
+```
+
+```{r}
+chi_sq2$observed
+```
+
+```{r}
+chi_sq2$expected
+```
+with a df of 3 and p-value considerably under 0.05, **the relationship is significant at a 95-percent confidence level**.
+
+### **Grade level attending & self-care difficulty**: *Chi Square test*
+```{r}
+chi_sq3 <- chisq.test(u18people_data$SCHG_label, u18people_data$FDDRSP_label)
+chi_sq3
+```
+
+```{r}
+chi_sq3$observed
+```
+
+```{r}
+chi_sq3$expected
+```
+
+with a p-value as small as the reflected in the test, **further approximations are subject to inaccuracy**. However, the p-value in this test matches with the previous one (chi_sq2), so I am thinking the results might have something to do with the df value (15 in this test and 45 in chi_sq1). 
+
+I am currently in the process of understanding the implications of these *Chi-squared approximation may be incorrect* results (at chi_sq3 and chi_sq1) in my research question.
+
+### **Grandparents responsible for grandchildren & self-care difficulty**: *Chi Square test*
+```{r}
+chi_sq4 <- chisq.test(o50people_data$GCR_label, o50people_data$FDDRSP_label)
+chi_sq4
+```
+
+```{r}
+chi_sq2$observed
+```
+
+```{r}
+chi_sq2$expected
+```
+
+with a p-value of = 0.04, **the relationship is significant at a 95-percent confidence level**. Finally, I will graphically represent these results, and also incorporate the variable of age toward a -hopefully- integrated understanding of the relationship:
+
+```{r, message=FALSE, results='hide'}
+
+ggplot(o50people_data, 
+       aes(x = AGEP,
+           y = GCR_label,
+           color= FDDRSP_label,
+           shape= FDDRSP_label)) +
+  geom_point(position = "jitter",
+             size = 1.5,
+             alpha = 0.7) +
+  scale_x_continuous(name = "Age on population of over 50 within tract",
+                      breaks = seq(50, 100, by = 10),
+                     labels = paste(seq(50, 100, by = 10), sep = "")) +
+  scale_y_discrete(name = "Grandparents responsible for grandchildren",
+                       labels = c("No",
+                                  "Yes")) +
+   scale_color_manual (name = "Self-care\ndifficulty",
+                     values = wes_palette("Moonrise1", n = 2),
+                        labels = c("No",
+                                  "Yes")) +
+  scale_shape_discrete(name = "Self-care\ndifficulty",
+                     labels = c("No", "Yes")) +
+  
+  theme_minimal()+ 
+  theme(legend.key.size = unit(0.1, "cm"))
+```
+
+
