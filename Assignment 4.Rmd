@@ -1,0 +1,65 @@
+---
+title: "Assignment 4"
+author: "Cristina Davila Gonzalez"
+date: "10/4/2020"
+output: html_document
+---
+
+```{r, message=FALSE, results='hide'}
+library(tidyverse)
+```
+
+# **Grandparents on duty**: Linear regression model
+
+Loading the data
+```{r, results='hide', message=FALSE}
+o50peopleg_data <-read_csv("O50peopleg.csv")
+```
+
+## List of Variables used in this exercise
+
+**Dependent variable:**
+
+1. *Age* (AGEP) (continuous) - Age of population over 50 within tract
+
+**Independent variables:**
+
+2. *Self-care difficulty* (FDDRSP_label) (categorical) - Self-care difficulty on population of 50 and over within tract
+
+3. *Grandparents responsible for grandchildren* (GCR_label) (categorical)
+
+4. *Total person's income* (PINCP) (continuous)
+
+5. *Gender* (SEX) (categorical) - Variable added for this exercise
+
+
+I decided to do the analysis for this assignment on my dataset that includes population of 50 and over, as it is directly related to my research question.Now I'll recode the dataset for better reading. 
+```{r, results='hide', message=FALSE}
+o50peopleg_data <-read_csv("O50peopleg.csv") %>%
+   mutate(FDDRSP_label = case_when(
+    FDDRSP_label=="Yes" ~ "Care needed",
+    FDDRSP_label=="No" ~ "No care needed")) %>%
+  mutate(SEX_label = case_when(
+    SEX_label=="Male" ~ "Male",
+    SEX_label=="Female" ~ "Female"))%>%
+  mutate(GCR_label = case_when(
+    GCR_label=="Yes" ~ "Responsible",
+    GCR_label=="No" ~ "Not Responsible"))
+```
+
+### Regression Model: Age of population of 50 and over within tract based on income, gender, responsibility of grandchildren and self-care difficulty in Cook County, Illinois.
+
+```{r, message=FALSE}
+model <- lm(AGEP ~ SEX_label+ PINCP + GCR_label + FDDRSP_label, 
+            data = o50peopleg_data)
+
+summary(model)
+```
+
+With a R Square value of **.036**, the variables explain around a 4% of the variation in age in population of 50 and over. Here, all the relationships are statistically significant at a 95% confidence level, meaning they are working with p-values of less than 0.5. 
+
+In this analysis, The only variable that showed a proportional relationship with the dependent variable what that of Gender **(SEX)** with and estimate of almost 1. When it comes income **(PINCP)**, this variable has a slightly inverse relationship with the dependent variable, which indicates that as the age increases, the person's total income decreases by an estimate of 0.00001791. Responsibility of Grand Children **(GCR)** and lack of Self-care difficulty **(FDDRSP_label)** are also part of the variables with this type of relationship with age, with an estimate decrease by almost 3 and 2 respectively as the value of age increases. 
+
+From the intercepted values of the variables analyzed in this model, and the relationships with the dependent variable, it seems to me that the general predictions of age in the framework of my research question on *Grandparents on duty* are below the median age of grandparents at Cook County, Illinois. However, I'm on the continuous process of fully understanding the meaning of results throughout the course. 
+
+
