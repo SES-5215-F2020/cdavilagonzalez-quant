@@ -1,0 +1,178 @@
+---
+title: "Assignment 5"
+author: "Cristina Davila Gonzalez"
+date: "10/6/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(jtools)
+library(interactions)
+library(knitr)
+library(wesanderson)
+```
+
+# **Grandparents on duty**: 
+
+## Initial Linear regression model
+```{r, results='hide', message=FALSE}
+o50peopleg_data <-read_csv("O50peopleg.csv")
+```
+
+```{r, results='hide', message=FALSE}
+o50peopleg_data <-read_csv("O50peopleg.csv") %>%
+   mutate(FDDRSP_label = case_when(
+    FDDRSP_label=="Yes" ~ "Care needed",
+    FDDRSP_label=="No" ~ "No care needed")) %>%
+  mutate(SEX_label = case_when(
+    SEX_label=="Male" ~ "Male",
+    SEX_label=="Female" ~ "Female")) %>%
+  mutate(GCR_label = case_when(
+    GCR_label=="Yes" ~ "Responsible",
+    GCR_label=="No" ~ "Not Responsible")) %>%
+ filter(PINCP != "0")
+```
+
+```{r, message=FALSE}
+model1 <- lm(AGEP ~ SEX_label+ PINCP + GCR_label + FDDRSP_label, 
+            data = o50peopleg_data)
+
+summary(model1)
+```
+
+## Log transformation - Total person's income (PINCP)
+```{r, message=FALSE}
+model2 <- lm(AGEP ~ SEX_label+ log(PINCP) + GCR_label + FDDRSP_label, 
+            data = o50peopleg_data)
+
+summary(model2)
+```
+
+The R-squared value changes, very slightly, from 0.04 to 0.0546, which shows a considerably improvement. Let's try other options .
+
+## Conversion from continuous to categorical - Income (PINCP)
+```{r, message=FALSE}
+o50peopleg_data <- o50peopleg_data %>%
+  mutate(income_block = case_when(PINCP < 50001 ~ "Under 50,000$",
+                               PINCP > 50000 ~ "Over 50,000$"))
+
+model3 <- lm(AGEP ~ SEX_label+ income_block + GCR_label + FDDRSP_label, 
+            data = o50peopleg_data)
+
+summary(model3)
+```
+
+The model fit is better than the initial, even if it is by a margin of 0.005. However, is not as good as the model with the logarithmic transformation. It was still worth the try.
+
+## Adding an interaction term - Gender (SEX_label)
+```{r, message=FALSE}
+model4 <- lm(AGEP ~ SEX_label+ income_block + GCR_label + FDDRSP_label +
+               income_block:SEX_label + GCR_label:SEX_label + 
+               FDDRSP_label:SEX_label, 
+            data = o50peopleg_data)
+
+summary(model4)
+```
+All variables considered for this model count with statistically significant coefficients. 
+
+The positive coefficient for income indicates most people over 50 within the tract are likely to have a total income of under 50,000$, and the coefficient from the interaction between sex tells us that incomes -here as well- are higher for men than they are for women. 
+
+At the same time, the negative coefficients for both categories regarding grandchildren responsibility and self-care difficulty suggest that most people who are responsible for their grandchildren are not only younger, but also don't need any sort of assisted care. When it comes to gender, the difference is slightly greater for men than for women. 
+
+## Visualizing the results
+
+### Comparison between model results 
+```{r, message=FALSE}
+ModelFit <- tibble(model = c(1, 2, 3, 4),
+                   R_square = c(summary(model1)$adj.r.squared,
+                                summary(model2)$adj.r.squared,
+                                summary(model3)$adj.r.squared,
+                                summary(model4)$adj.r.squared))
+
+ggplot(ModelFit, aes(x = model, y = R_square)) +
+  geom_line(color= "gray") +
+  scale_x_continuous(name = "",
+                   breaks = breaks <- seq(1, 4, by = 1),
+                   labels = paste("Model", breaks)) +
+  scale_y_continuous(name = "Adjusted R-squared value\n") +
+  theme_minimal()
+```
+
+Model 2 is definitely the preferred model.
+
+### Table format for preferred model
+```{r, message=FALSE}
+coeff_names <- c("Male\n(compared to female)" = "SEX_labelMale",
+                 "Total income\n(log-transformed)" = 
+                   "log(PINCP)",
+                 "Grandchildren responsibility\n(compared to not responsible)" = 
+                   "GCR_labelResponsible",
+                 "Self-care difficulty\n(compared to no care needed)" =
+                   "FDDRSP_labelNo care needed")
+
+export_summs(model1, model2, 
+             error_format = "(p = {p.value})",
+             error_pos = "same",
+             model.names = c("Initial model", "Preferred model"),
+             coefs = coeff_names)
+```
+
+### Visualizing preferred regresion model results
+```{r, message=FALSE}
+coeff_desc <- c(" Being male\n(compared to female)" = "SEX_labelMale",
+                 "Doubling total income\n(log-transformed)" = 
+                   "log(PINCP)",
+                 "Being responsible for grandchildren\n(compared to not being responsible)" = 
+                   "GCR_labelResponsible",
+                 "Presenting any self-care difficulty\n(compared to no care needed)" =
+                   "FDDRSP_labelNo care needed")
+
+plot_coefs(model2,colors = "gray", 
+           coefs = coeff_desc,
+           plot.distributions = TRUE,
+           rescale.distributions = TRUE) +
+  scale_x_continuous(name = "\nEffect on predicted age (years)")+
+  scale_color_manual(values = wes_palette("Moonrise1", n =1)) 
+
+```
+
+### Predicted relationships between income and age, for both men and women
+```{r, message=FALSE}
+interact_plot(model2, pred = PINCP, modx = SEX_label, interval = TRUE) +
+  scale_x_continuous(name = "\nTotal income (thousands)",
+                     limits = c(0, 500000),
+                     breaks = breaks <- seq(0, 500000, by = 50000),
+                     labels = paste( 
+                                    prettyNum(breaks/1000, big.mark = "'"),
+                                    sep = "")) +
+  scale_y_continuous(name = "Age (years)\n",
+                     breaks = seq(50, 100, by = 5 )) +
+  scale_color_manual(name = "",
+                      values = wes_palette("Moonrise1", n = 2),
+                       labels = c("Female",
+                                  "Male")) +
+  scale_linetype_discrete(name = "") +
+  scale_fill_discrete(name = "") 
+
+```
+
+### Predicted relationships between grandchildren responsibility and age, for both men and women
+```{r, message=FALSE}
+cat_plot(model2, pred = GCR_label, modx = SEX_label, interval = TRUE) +
+ scale_x_discrete(name = "\nGrandchildren responsibility",
+                    labels = c("Responsible", "Not responsible")) +
+   scale_y_continuous(name = "Age (years)\n",
+                     breaks = seq(50, 100, by = 5 )) +
+  scale_color_manual(name = "",
+                      values = wes_palette("Moonrise1", n = 2),
+                       labels = c("Female",
+                                  "Male")) +
+  scale_linetype_discrete(name = "") +
+  scale_fill_discrete(name = "") 
+```
+
+
+
+
+
